@@ -2,6 +2,8 @@ package gaborohez.texttospeach
 
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -29,11 +31,20 @@ class MainActivity : AppCompatActivity() {
         setUpEvents()
     }
 
-    private fun setUpEvents() {
-        binding.btnPlay.setOnClickListener {
-            val messageToSpeech = binding.tilMessage.editText!!.text.toString().trim()
-            textToSpeech!!.speak(messageToSpeech, TextToSpeech.QUEUE_FLUSH, null, "")
+    private fun isEnableSpeech(): Boolean {
+        var flag = true
+        textToSpeech = TextToSpeech(this) {
+            if (it == TextToSpeech.SUCCESS) {
+                flag = true
+                Log.d(TAG, getString(R.string.success))
+                textToSpeech!!.language = Locale.US
+                textToSpeech!!.setSpeechRate(0.6f)
+            } else {
+                flag = false
+                Log.d(TAG, getString(R.string.no_available))
+            }
         }
+        return flag
     }
 
     private fun showDialog() {
@@ -49,18 +60,30 @@ class MainActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun isEnableSpeech(): Boolean {
-        var flag = true
-        textToSpeech = TextToSpeech(this) {
-            if (it == TextToSpeech.SUCCESS) {
-                flag = true
-                Log.d(TAG, getString(R.string.success))
-                textToSpeech!!.language = Locale.US
-            } else {
-                flag = false
-                Log.d(TAG, getString(R.string.no_available))
+    private fun setUpEvents() {
+
+        binding.tilMessage.editText!!.addTextChangedListener(object : TextWatcher {
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun afterTextChanged(p0: Editable?) {}
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                if (p0!!.toString().isNotEmpty())
+                    binding.tilMessage.error = null
+            }
+        })
+
+        binding.radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radioEnglish -> textToSpeech!!.language = Locale.US
+                R.id.radioSpanish -> textToSpeech!!.language = Locale("ES")
             }
         }
-        return flag
+
+        binding.btnPlay.setOnClickListener {
+            val messageToSpeech = binding.tilMessage.editText!!.text.toString().trim()
+            if (messageToSpeech.isEmpty()) {
+                binding.tilMessage.error = getString(R.string.warning_message)
+            }
+            textToSpeech!!.speak(messageToSpeech, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
     }
 }
