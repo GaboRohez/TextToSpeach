@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import gaborohez.texttospeach.databinding.ActivityMainBinding
@@ -12,11 +11,9 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val TAG = "MainActivity"
-
     private lateinit var binding: ActivityMainBinding
 
-    var textToSpeech: TextToSpeech? = null
+    private var textToSpeech: TextToSpeech? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,12 +33,10 @@ class MainActivity : AppCompatActivity() {
         textToSpeech = TextToSpeech(this) {
             if (it == TextToSpeech.SUCCESS) {
                 flag = true
-                Log.d(TAG, getString(R.string.success))
                 textToSpeech!!.language = Locale.US
                 textToSpeech!!.setSpeechRate(0.6f)
             } else {
                 flag = false
-                Log.d(TAG, getString(R.string.no_available))
             }
         }
         return flag
@@ -85,5 +80,13 @@ class MainActivity : AppCompatActivity() {
             }
             textToSpeech!!.speak(messageToSpeech, TextToSpeech.QUEUE_FLUSH, null, "")
         }
+    }
+
+    override fun onDestroy() {
+        if (textToSpeech != null) {
+            textToSpeech!!.stop()
+            textToSpeech!!.shutdown()
+        }
+        super.onDestroy()
     }
 }
